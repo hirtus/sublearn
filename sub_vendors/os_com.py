@@ -1,3 +1,4 @@
+import os
 from configparser import ConfigParser
 from typing import List
 
@@ -84,6 +85,7 @@ class SubtitleService:
 
             if response.status_code != 200:
                 if response.status_code == 401:
+                    print("Change token!!!")
                     self.__login()
                     response = requests.get(endpoint, params={'query': query}, headers={'Authorization': self.__token})
                 else:
@@ -117,12 +119,59 @@ class SubtitleService:
         try:
             endpoint = f'{self.__url}/download'
             response = requests.post(endpoint, params={'file_id': sub_id}, headers={'Authorization': self.__token})
+            print(response.text)
             return response.json()["link"]
         except requests.HTTPError as http_err:
             print(f'HTTP error occurred: {http_err}')
         except Exception as ex:
             print(f"Exception: {ex}")
 
+    def check_downloading(self) -> bool:
+        user_info = self.get_user_info()
+        remaining_downloads = user_info["remaining_downloads"]
+        return remaining_downloads <= 0
+
+    def get_user_info(self):
+        try:
+            endpoint = f'{self.__url}/infos/user'
+            response = requests.get(endpoint, headers={'Authorization': self.__token})
+            print(response.text)
+            return response.json()["data"]
+        except requests.HTTPError as http_err:
+            print(f'HTTP error occurred: {http_err}')
+        except Exception as ex:
+            print(f"Exception: {ex}")
+
+    def get_subtitle(self, subtitle: Subtitle) -> str:
+        try:
+            cache = SubtitlesCache(subtitle)
+            if cache.check():
+                return cache.get()
+            else:
+                link = self.get_link_sub(subtitle.file_id)
+                response = requests.get(link)
+                cache.save(response.text)
+                return response.text
+        except requests.HTTPError as http_err:
+            print(f'HTTP error occurred: {http_err}')
+        except Exception as ex:
+            print(f"Exception: {ex}")
 
 
+class SubtitlesCache:
+    __path = "cache/opensubtitles.com/subtitles/"
 
+    def __init__(self, subtitle: Subtitle):
+        os.makedirs(self.__path, exist_ok=True)
+        self.__file_path = os.path.join(self.__path, subtitle.file_name)
+
+    def check(self) -> bool:
+        return os.path.isfile(self.__file_path)
+
+    def save(self, text: str):
+        file = open(self.__file_path, "w")
+        file.write(text)
+
+    def get(self) -> str:
+        file = open(self.__file_path, "r")
+        return file.read()
