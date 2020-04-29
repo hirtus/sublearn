@@ -1,5 +1,4 @@
-class Words:
-    list = {
+Words = {
         'a',
         'ability',
         'able',
