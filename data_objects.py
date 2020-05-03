@@ -86,6 +86,7 @@ class Step(Enum):
     SELECT_SEASON = 2
     SELECT_EPISODE = 3
     GET_WORDS = 4
+    NEW = 5
 
 
 @dataclass
