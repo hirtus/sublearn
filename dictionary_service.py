@@ -3,9 +3,11 @@ import re
 import requests
 
 from dictionaries.basic_1000 import Words as Dic1000
+from dictionaries.basic_3000 import Words as Dic3000
 from dictionaries.basic_my import Words as DicMy
 from dictionaries.basic_200 import Words as Dic200
 from dictionaries.basic_names import Words as Names
+from dictionaries.basic_geografics import Words as Geografics
 from translators.yandex_translator import Translator
 
 
@@ -23,7 +25,7 @@ class DictionaryService:
         for i, word in enumerate(new_words):
             text = f"{i + 1} {word} - {translations[i]}"
             dictionary.append(text)
-            print(text)
+            # print(text)
 
         return dictionary
 
@@ -31,12 +33,13 @@ class DictionaryService:
     def __remove_numeric(words) -> list:
         words_without_numeric = list({})
         for word in words:
-            if not str(word).isnumeric() and len(word) > 2:
+            if not str(word).isnumeric() and len(word) > 2 and str(word).find("'") == -1 and str(word).find("-") == -1:
                 words_without_numeric.append(word)
         return words_without_numeric
 
     def __get_new_words(self, words) -> list:
-        dictionaries = set(DicMy.union(Dic200).union(Dic1000).union(Names))
+        dictionaries = set(DicMy.union(Dic200).union(Dic1000).union(Names).union(Geografics))
+        # dictionaries = set(DicMy.union(Dic3000).union(Names).union(Geografics))
         diff_words = words.difference(dictionaries)
         new_words = self.__remove_numeric(diff_words)
         print(f"Words - All: {len(words)} base: {len(dictionaries)} new: {len(new_words)}")
