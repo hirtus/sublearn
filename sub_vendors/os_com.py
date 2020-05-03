@@ -91,7 +91,7 @@ class SubtitleService:
                 else:
                     print(f"Error to get serials: {response.reason}")
                     exit(1)
-
+            print(response.text)
             serials = self.__parse_serials(response.json()["data"])
             return serials
         except Exception as ex:
@@ -108,6 +108,7 @@ class SubtitleService:
                                               'languages': 'en'},
                                     headers={'Authorization': self.__token})
 
+            print(response.text)
             subtitle = self.__parse_subtitle(response.json()["data"][0])
             return subtitle
         except requests.HTTPError as http_err:
@@ -115,10 +116,10 @@ class SubtitleService:
         except Exception as ex:
             print(f"Exception: {ex}")
 
-    def get_link_sub(self, sub_id) -> str:
+    def get_link_sub(self, sub_id, file_name) -> str:
         try:
             endpoint = f'{self.__url}/download'
-            response = requests.post(endpoint, params={'file_id': sub_id}, headers={'Authorization': self.__token})
+            response = requests.post(endpoint, params={'file_id': sub_id, 'file_name': file_name}, headers={'Authorization': self.__token})
             print(response.text)
             return response.json()["link"]
         except requests.HTTPError as http_err:
@@ -129,12 +130,22 @@ class SubtitleService:
     def check_downloading(self) -> bool:
         user_info = self.get_user_info()
         remaining_downloads = user_info["remaining_downloads"]
-        return remaining_downloads <= 0
+        return remaining_downloads > 0
 
     def get_user_info(self):
         try:
             endpoint = f'{self.__url}/infos/user'
             response = requests.get(endpoint, headers={'Authorization': self.__token})
+
+            if response.status_code != 200:
+                if response.status_code == 401:
+                    print("Change token!!!")
+                    self.__login()
+                    response = requests.get(endpoint, headers={'Authorization': self.__token})
+                else:
+                    print(f"Error to get userinfo: {response.reason}")
+                    exit(1)
+
             print(response.text)
             return response.json()["data"]
         except requests.HTTPError as http_err:
@@ -148,10 +159,13 @@ class SubtitleService:
             if cache.check():
                 return cache.get()
             else:
-                link = self.get_link_sub(subtitle.file_id)
-                response = requests.get(link)
-                cache.save(response.text)
-                return response.text
+                link = self.get_link_sub(subtitle.file_id, subtitle.file_name)
+                if len(link) != 0:
+                    response = requests.get(link)
+                    cache.save(response.text)
+                    return response.text
+                else:
+                    return ''
         except requests.HTTPError as http_err:
             print(f'HTTP error occurred: {http_err}')
         except Exception as ex:

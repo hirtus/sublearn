@@ -14,6 +14,9 @@ def main():
         exit(0)
     query = input("Input search: ")
     serials = sub_service.search_serial(query)
+    if len(serials) == 0:
+        print("Sorry, not found ...")
+        exit(0)
     for i, serial in enumerate(serials):
         print(f"{i + 1}: {serial.title} [{serial.year}]")
     serial_number = int(input("Enter serial number: ")) - 1
@@ -26,9 +29,8 @@ def main():
     episode_number = int(input("Enter episode number: "))
     subtitle = sub_service.find_subtitle(serial.id, season_number + 1, episode_number)
     print(subtitle)
-    link = sub_service.get_link_sub(subtitle.file_id)
-    response = requests.get(link)
-    dictionary = DictionaryService(config).create_dictionary(response.text)
+    sub_text = sub_service.get_subtitle(subtitle)
+    dictionary = DictionaryService(config).create_dictionary(sub_text)
 
 
 if __name__ == '__main__':
