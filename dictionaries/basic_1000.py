@@ -5,7 +5,7 @@ Words = {
         'about',
         'above',
         'accept',
-        # 'account',
+        'account',
         'across',
         'act',
         'action',
