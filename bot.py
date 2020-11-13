@@ -42,9 +42,9 @@ def main():
                             if session.step == Step.SELECT_EPISODE:
                                 episode = session.season.episodes[int(data)]
                                 sessionManager.update_session(chat_id, Step.GET_WORDS, episode=episode)
-                                subtitle = sub_service.find_subtitle(session.serial.id, int(session.season_number) + 1, episode.number)
+                                subtitle = sub_service.get_subtitle(session.serial.id, session.serial.title, int(session.season_number) + 1, episode.number)
                                 print(subtitle)
-                                sub_text = sub_service.get_subtitle(subtitle)
+                                sub_text = sub_service.get_subtitle_text(subtitle)
                                 if len(sub_text) != 0:
                                     dictionary = DictionaryService(config).create_dictionary(sub_text)
                                     keyboard_markup = None

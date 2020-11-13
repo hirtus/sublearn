@@ -35,12 +35,12 @@ class SubtitleService:
         # print(json)
         episodes = list({})
         for episode in json:
-            episodes.append(Episode(episode["episode number"], episode["title"], episode["feature_id"]))
+            episodes.append(Episode(episode["episode_number"], episode["title"], episode["feature_id"]))
         return episodes
 
     def __parse_season(self, json) -> Season:
         # print(json)
-        title = json["title"]
+        title = json["season_number"] #json["title"]
         episodes = self.__parse_episode(json["episodes"])
         return Season(title, episodes)
 
@@ -55,9 +55,9 @@ class SubtitleService:
         id = json["id"]
         title = json["attributes"]["title"]
         year = json["attributes"]["year"]
-        imdbid = json["attributes"]["imdbid"]
-        tmdbid = json["attributes"]["tmdbid"]
-        seasons = self.__parse_seasons(json["attributes"]["seasons_details"])
+        imdbid = json["attributes"]["imdb_id"]
+        tmdbid = json["attributes"]["tmdb_id"]
+        seasons = self.__parse_seasons(json["attributes"]["seasons"])
         serial = Serial(id, title, year, imdbid, tmdbid, seasons)
         return serial
 
@@ -98,7 +98,7 @@ class SubtitleService:
             print(f"Exception: {ex}")
             # exit(1)
 
-    def find_subtitle(self, serial_id, season_number, episode_number) -> Subtitle:
+    def get_subtitle(self, serial_id, serial_title, season_number, episode_number) -> Subtitle:
         try:
             endpoint = f'{self.__url}/find/tv'
             response = requests.get(endpoint,
@@ -116,7 +116,7 @@ class SubtitleService:
         except Exception as ex:
             print(f"Exception: {ex}")
 
-    def get_link_sub(self, sub_id, file_name) -> str:
+    def __get_link_sub(self, sub_id, file_name) -> str:
         try:
             endpoint = f'{self.__url}/download'
             response = requests.post(endpoint, params={'file_id': sub_id, 'file_name': file_name}, headers={'Authorization': self.__token})
@@ -153,13 +153,13 @@ class SubtitleService:
         except Exception as ex:
             print(f"Exception: {ex}")
 
-    def get_subtitle(self, subtitle: Subtitle) -> str:
+    def get_subtitle_text(self, subtitle: Subtitle) -> str:
         try:
             cache = SubtitlesCache(subtitle)
             if cache.check():
                 return cache.get()
             else:
-                link = self.get_link_sub(subtitle.file_id, subtitle.file_name)
+                link = self.__get_link_sub(subtitle.file_id, subtitle.file_name)
                 if len(link) != 0:
                     response = requests.get(link)
                     cache.save(response.text)
