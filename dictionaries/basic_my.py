@@ -4,7 +4,6 @@ Words = {
         "mystery",
         "doors",
         "nobody",
-        "farah",
         "being",
         "combination",
         "lightning",

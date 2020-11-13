@@ -229,5 +229,7 @@ Words = {
         "trosts",
         "adrienne",
         "dang",
-        "freedman"
+        "freedman",
+        "farah",
+        "eleanor"
     }
