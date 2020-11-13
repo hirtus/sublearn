@@ -31,3 +31,10 @@ def buttons_from_episodes(episodes: List[Episode]):
         buttons[f"{episode.number}: {episode.title}"] = i
     return buttons
 
+
+def buttons_for_footer():
+    buttons = dict()
+    buttons[f"Export"] = "export_event"
+    buttons[f"Edit"] = "edit_event"
+    return buttons
+
