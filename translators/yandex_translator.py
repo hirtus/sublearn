@@ -13,6 +13,9 @@ class Translator:
         url = f"https://translate.yandex.net/api/v1.5/tr.json/translate?key={key}&lang=en-ru&{params}"
         translation = requests.get(url)
 
+        if translation.status_code != 200:
+            print(translation.text)
+
         return translation.json()["text"]
 
     def __build_params(self, words):
