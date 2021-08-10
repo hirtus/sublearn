@@ -28,6 +28,12 @@ class Addic7edTestCase(unittest.TestCase):
         link = self.sub_service.get_link_from_html(html)
         self.assertEqual(link, "www.addic7ed.com/original/3884/1")
 
+    def test_get_movie_link_from_html(self):
+        with open("addic7ed_film.html", "r") as file:
+            html = file.read()
+        link = self.sub_service.get_movie_link_from_html(html)
+        self.assertEqual(link, "https://www.addic7ed.com/movie/88914")
+
     def test_find_subtitle(self):
         subtitle = self.sub_service.find_subtitle("0", "The Good Place", 2, 3)
         self.assertTrue(True)

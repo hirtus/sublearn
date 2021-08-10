@@ -1,6 +1,6 @@
 from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from data_objects import Serial, Episode, Season
+from data_objects import Serial, Episode, Season, Movie
 
 
 def create_keyboard(buttons: dict) -> InlineKeyboardMarkup:
@@ -11,10 +11,10 @@ def create_keyboard(buttons: dict) -> InlineKeyboardMarkup:
     return keyboard_markup
 
 
-def buttons_from_serials(serials: List[Serial]):
+def buttons_from_movies(movies: List[Movie]):
     buttons = dict()
-    for i, serial in enumerate(serials):
-        buttons[f"{serial.title} [{serial.year}]"] = i
+    for i, movie in enumerate(movies):
+        buttons[f"{movie.title} [{movie.year}] {movie.type.name}"] = i
     return buttons
 
 

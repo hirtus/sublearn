@@ -4,10 +4,9 @@ import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 
-from data_objects import Step
+from data_objects import Step, Serial, MovieType
 from dictionary_service import DictionaryService
-from keyboard import create_keyboard, buttons_from_serials, buttons_from_seasons, buttons_from_episodes, \
-    buttons_for_footer
+from keyboard import create_keyboard, buttons_from_seasons, buttons_from_episodes, buttons_for_footer, buttons_from_movies
 from sub_vendors.addic7ed import SubtitleService
 # from sub_vendors.os_com import SubtitleService
 from user import User
@@ -44,54 +43,75 @@ def button(update: Update, context: CallbackContext):
         print("Edit calling...")
 
     if context.user_data["STATE"] != Step.NEW:
-        if context.user_data["STATE"] == Step.SELECT_SERIAL:
-            context.user_data["SERIAL"] = context.user_data["SERIALS"][int(data)]
-            context.user_data["STATE"] = Step.SELECT_SEASON
-            serial = context.user_data["SERIAL"]
-            buttons = buttons_from_seasons(serial.seasons)
-            keyboard_markup = create_keyboard(buttons)
-            message = "Select season:"
-        else:
-            if context.user_data["STATE"] == Step.SELECT_SEASON:
-                season = context.user_data["SERIAL"].seasons[int(data)]
-                context.user_data["SEASON_NUMBER"] = data
-                context.user_data["SEASON"] = season
-                context.user_data["STATE"] = Step.SELECT_EPISODE
-
-                buttons = buttons_from_episodes(season.episodes)
+        if context.user_data["STATE"] == Step.SELECT_MOVIE:
+            movie = context.user_data["MOVIES"][int(data)]
+            if movie.type == MovieType.SERIAL:
+                context.user_data["SERIAL"] = movie
+                context.user_data["STATE"] = Step.SELECT_SEASON
+                serial = context.user_data["SERIAL"]
+                buttons = buttons_from_seasons(serial.seasons)
                 keyboard_markup = create_keyboard(buttons)
-                message = "Select episode:"
+                message = "Select season:"
             else:
-                if context.user_data["STATE"] == Step.SELECT_EPISODE:
-                    season = context.user_data["SEASON"]
-                    episode = season.episodes[int(data)]
-                    context.user_data["EPISODE"] = episode
-                    context.user_data["STATE"] = Step.GET_WORDS
-                    season_number = str(season.title).lower().replace("season ", "")
-                    serial = context.user_data["SERIAL"]
-                    subtitle = sub_service.get_subtitle(serial.id, serial.title, season_number, episode.number)
-                    print(subtitle)
-                    sub_text = sub_service.get_subtitle_text(subtitle)
-                    if len(sub_text) != 0:
-                        buttons = buttons_for_footer()
-                        keyboard_markup = create_keyboard(buttons)
-                        user = User(chat_id)
-                        dictionary = DictionaryService(config).create_user_dictionary(sub_text, user)
-                        message = f"You select {serial.title} {context.user_data['SEASON'].title} episode {episode.number}, words count: {len(dictionary)}"
-                        text = str()
-                        for i, line in enumerate(dictionary):
-                            if i % 150 == 0 and i > 0:
-                                bot.send_message(chat_id, text)
-                                text = line + "\r\n"
-                            else:
-                                text += line + "\r\n"
-                        bot.send_message(chat_id, text)
-                    else:
-                        keyboard_markup = None
-                        message = "Sorry, subtitles is empty..."
+                context.user_data["STATE"] = Step.GET_WORDS
+                subtitle = sub_service.get_subtitle_movie(movie.id, movie.title, movie.year)
+                sub_text = sub_service.get_subtitle_text(subtitle)
+                if len(sub_text) != 0:
+                    buttons = buttons_for_footer()
+                    keyboard_markup = create_keyboard(buttons)
+                    user = User(chat_id)
+                    dictionary = DictionaryService(config).create_user_dictionary(sub_text, user)
+                    message = f"You select {movie.title}, words count: {len(dictionary)}"
+                    text = str()
+                    for i, line in enumerate(dictionary):
+                        if i % 150 == 0 and i > 0:
+                            bot.send_message(chat_id, text)
+                            text = line + "\r\n"
+                        else:
+                            text += line + "\r\n"
+                    bot.send_message(chat_id, text)
                 else:
                     keyboard_markup = None
-                    message = "Sorry, please repeat your search..."
+                    message = "Sorry, subtitles is empty..."
+        elif context.user_data["STATE"] == Step.SELECT_SEASON:
+            season = context.user_data["SERIAL"].seasons[int(data)]
+            context.user_data["SEASON_NUMBER"] = data
+            context.user_data["SEASON"] = season
+            context.user_data["STATE"] = Step.SELECT_EPISODE
+
+            buttons = buttons_from_episodes(season.episodes)
+            keyboard_markup = create_keyboard(buttons)
+            message = "Select episode:"
+        elif context.user_data["STATE"] == Step.SELECT_EPISODE:
+            season = context.user_data["SEASON"]
+            episode = season.episodes[int(data)]
+            context.user_data["EPISODE"] = episode
+            context.user_data["STATE"] = Step.GET_WORDS
+            season_number = str(season.title).lower().replace("season ", "")
+            serial = context.user_data["SERIAL"]
+            subtitle = sub_service.get_subtitle(serial.id, serial.title, season_number, episode.number)
+
+            sub_text = sub_service.get_subtitle_text(subtitle)
+            if len(sub_text) != 0:
+                buttons = buttons_for_footer()
+                keyboard_markup = create_keyboard(buttons)
+                user = User(chat_id)
+                dictionary = DictionaryService(config).create_user_dictionary(sub_text, user)
+                message = f"You select {serial.title} {context.user_data['SEASON'].title} episode {episode.number}, words count: {len(dictionary)}"
+                text = str()
+                for i, line in enumerate(dictionary):
+                    if i % 150 == 0 and i > 0:
+                        bot.send_message(chat_id, text)
+                        text = line + "\r\n"
+                    else:
+                        text += line + "\r\n"
+                bot.send_message(chat_id, text)
+            else:
+                keyboard_markup = None
+                message = "Sorry, subtitles is empty..."
+        else:
+            keyboard_markup = None
+            message = "Sorry, please repeat your search..."
         query.answer()
         query.edit_message_text(text=message, reply_markup=keyboard_markup)
 
@@ -107,15 +127,15 @@ def error(update, context):
 
 def search(update: Update, context: CallbackContext):
     message = update.message.text
-    serials = sub_service.search_serial(message)
-    if len(serials) == 0:
+    movies = sub_service.search_movie(message)
+    if len(movies) == 0:
         update.message.reply_text("Nothing not found...")
     else:
-        context.user_data["SERIALS"] = serials
-        context.user_data["STATE"] = Step.SELECT_SERIAL
-        buttons = buttons_from_serials(serials)
+        context.user_data["MOVIES"] = movies
+        context.user_data["STATE"] = Step.SELECT_MOVIE
+        buttons = buttons_from_movies(movies)
         keyboard_markup = create_keyboard(buttons)
-        update.message.reply_text('Select serial:', reply_markup=keyboard_markup)
+        update.message.reply_text('Select movie:', reply_markup=keyboard_markup)
     context.bot.delete_message(update.message.chat.id, update.message.message_id)
 
 
