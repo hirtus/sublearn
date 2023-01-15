@@ -6,7 +6,7 @@ from translators.google_translator import Translator
 class MainTestCase(unittest.TestCase):
     def setUp(self) -> None:
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read("../config.ini")
         self.translator = Translator(config)
 
     def test_translate(self):

@@ -1,40 +1,45 @@
 import json
 import urllib
+from configparser import ConfigParser
 from http.cookiejar import CookieJar
+from urllib.parse import urljoin
 
 
 class LearnPlatform:
-    def __init__(self, email, password):
-        self.email = email
-        self.password = password
+    __refer = 'https://lingualeo.com/ru/'
+
+    def __init__(self, config: ConfigParser):
+        self.url = config['lingualeo']['url']
+        self.email = config['lingualeo']['user']
+        self.password = config['lingualeo']['password']
         self.cj = CookieJar()
 
     def auth(self):
-        url = 'https://lingualeo.com/auth'
+        url = urljoin(self.url, 'auth')
         values = {
             "type": "mixed",
             "credentials": {"email": self.email, "password": self.password}
         }
         # Without this header request gets Error 405: Not Allowed
-        extra_headers = {'Referer': 'https://lingualeo.com/ru/'}
+        extra_headers = {'Referer': self.__refer}
         content = self.get_content(url, values, extra_headers)
         print(content)
         return content
 
     def add_word(self, word, tword, context):
-        url = "https://api.lingualeo.com/addword"
+        url = urljoin(self.url, 'addword')
         values = {
             "word": word,
             "tword": tword,
             "context": context,
         }
-        extra_headers = {'Referer': 'https://lingualeo.com/ru/'}
+        extra_headers = {'Referer': self.__refer}
         content = self.get_content(url, values, extra_headers)
         print(content)
         return content
 
     def is_authorized(self):
-        url = 'https://api.lingualeo.com/isauthorized'
+        url = urljoin(self.url, "isauthorized")
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cj))
         response = opener.open(url)
         status = json.loads(response.read()).get('is_authorized')

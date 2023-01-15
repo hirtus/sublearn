@@ -1,11 +1,11 @@
 import unittest
-from imdb import IMDb
+from imdb import Cinemagoer
 from imdb.Movie import Movie
 
 
 class IMDBSearchTestCase(unittest.TestCase):
     def test_search(self):
-        ia = IMDb()
+        ia = Cinemagoer()
         serials = ia.search_movie("good place")
         for serial in serials:
             if serial.data["kind"] == "tv series":

@@ -3,7 +3,7 @@ from dictionary_service import DictionaryService
 from sub_vendors.addic7ed import SubtitleService
 
 
-def main():
+def console():
     config = configparser.ConfigParser()
     config.read("config.ini")
 
@@ -34,6 +34,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    console()
 
 

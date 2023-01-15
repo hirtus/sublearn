@@ -5,6 +5,7 @@ from urllib import parse
 from bs4 import BeautifulSoup
 
 import requests
+# from imdb import Cinemagoer
 from imdb import IMDb
 from imdb.Movie import Movie as ImdbMovie
 
@@ -14,11 +15,11 @@ from data_objects import Serial, Episode, Season, Subtitle, Movie, MovieType
 class SubtitleService:
     def __init__(self, config: ConfigParser):
         pass
-        # self.__config = config
-        # self.__token = config["opensubtitles.com"]["Token"]
-        # self.__username = config["opensubtitles.com"]["User"]
-        # self.__password = config["opensubtitles.com"]["Password"]
+        self.__config = config
         self.__url = "https://www.addic7ed.com"
+
+    def get_serial(self, movie: Movie) -> Serial:
+        return self.__get_serial(movie.imdbid, movie.title, movie.year)
 
     @staticmethod
     def __get_serial(imdb_id: str, title: str, year: str) -> Serial:
@@ -45,16 +46,18 @@ class SubtitleService:
         try:
             movies: List[Movie] = []
             ia = IMDb()
-            _movies = ia.search_movie(query)
-            # only_serials = list(filter(lambda movie: movie.data["kind"] == "tv series", movies))
-            # only_movies = list(filter(lambda movie: movie.data["kind"] == "movie", movies))
+            _movies = ia.search_movie(query, _episodes=False)
             for info in _movies:
-                if info.data["kind"] == "tv series":
-                    movie = self.__get_serial(info.movieID, info.data["title"], info.data.get("year", 9999))
-                elif info.data["kind"] == "movie":
-                    movie = Movie(0, info.data["title"], info.data.get("year", 9999), info.movieID, "", MovieType.FILM)
+                kind = info.data["kind"]
+                if kind == "tv series" or kind == "tv mini series":
+                    movie_type = MovieType.SERIAL
+                elif kind == "movie":
+                    movie_type = MovieType.FILM
                 else:
+                    print(f'{info.data["title"]} kind is {kind}')
                     continue
+
+                movie = Movie(0, info.data["title"], info.data.get("year", 9999), info.movieID, "", movie_type)
                 movies.append(movie)
             return movies
         except Exception as ex:
@@ -71,7 +74,8 @@ class SubtitleService:
     def __get_movie_link_from_html(self, html) -> str:
         soup = BeautifulSoup(html, "lxml")
         path = soup.select_one(".tabel").select_one("a").attrs["href"]
-        link = f"{self.__url}/{path}"
+        # link = f"{self.__url}/{path}" ###OLD
+        link = path
         print(link)
         return link
 

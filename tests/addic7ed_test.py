@@ -8,12 +8,13 @@ from sub_vendors.addic7ed import SubtitleService
 class Addic7edTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.config = configparser.ConfigParser()
-        self.config.read("config.ini")
+        self.config.read("../config.ini")
         self.sub_service = SubtitleService(self.config)
 
     def test_search_serials(self):
-        serials = self.sub_service.search_serial("Good Place")
-        matches = list(filter(lambda serial: serial.imdbid == '4955642', serials))
+        movies = self.sub_service.search_movie("The Haunting of Hill House")
+        serials = list(map(lambda movie: self.sub_service.get_serial(movie), movies))
+        matches = list(filter(lambda serial: serial.imdbid == '6763664', serials))
         self.assertTrue(len(matches) == 1)
         serial = matches[0]
         self.assertEqual(len(serial.seasons), 4)
@@ -22,20 +23,22 @@ class Addic7edTestCase(unittest.TestCase):
         self.assertEqual(episode.number, 1)
         self.assertEqual(episode.feature_id, "5789204")
 
+    # TODO: Need test private method
     def test_get_link_from_html(self):
         with open("addic7ed.html", "r") as file:
             html = file.read()
         link = self.sub_service.get_link_from_html(html)
-        self.assertEqual(link, "www.addic7ed.com/original/3884/1")
+        self.assertEqual("https://www.addic7ed.com/original/3884/1", link)
 
+    # TODO: Need test private method
     def test_get_movie_link_from_html(self):
         with open("addic7ed_film.html", "r") as file:
             html = file.read()
         link = self.sub_service.get_movie_link_from_html(html)
-        self.assertEqual(link, "https://www.addic7ed.com/movie/88914")
+        self.assertEqual("https://www.addic7ed.com/movie/88914", link)
 
     def test_find_subtitle(self):
-        subtitle = self.sub_service.find_subtitle("0", "The Good Place", 2, 3)
+        subtitle = self.sub_service.get_subtitle("0", "The Good Place", 2, 3)
         self.assertTrue(True)
 
     def test_get_subtitle(self):

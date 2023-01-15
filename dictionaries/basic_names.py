@@ -231,5 +231,20 @@ Words = {
         "dang",
         "freedman",
         "farah",
-        "eleanor"
+        "eleanor",
+        "stacey",
+        "stacy",
+        "steve",
+        "steven",
+        "olivia",
+        "luke",
+        "hugh",
+        "abigail",
+        "nell",
+        "nellie",
+        "mary",
+        "henry",
+        "gina",
+        "dudley",
+        "clara"
     }
